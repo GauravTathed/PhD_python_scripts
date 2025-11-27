@@ -3,7 +3,7 @@ import serial
 import numpy as np
 import matplotlib.pyplot as plt
 
-PORT = 'COM3'
+PORT = 'COM9'
 BAUD = 2000000
 CHUNK = 2048
 BUF_LEN = 16384
