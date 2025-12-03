@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ba137-hyperfine"
+version = "0.1.0"
+description = "Hyperfine Hamiltonians, transition frequencies, and strengths for 137Ba+"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "Gaurav Ashish Tathed", email = "gatathed@uwaterloo.ca" }
+]
+license = { text = "MIT" }
+dependencies = [
+  "numpy",
+  "pandas",
+  "scipy",
+]
+
+[project.urls]
+Homepage = "https://github.com/gatathed/ba137_hyperfine"
+Issues = "https://github.com/gatathed/ba137_hyperfine/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
