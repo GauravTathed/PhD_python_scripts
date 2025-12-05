@@ -25,18 +25,28 @@ ax_time.set_ylim(0, VREF)
 ax_time.set_xlabel('Sample index')
 ax_time.set_ylabel('Voltage (V)')
 
-text_vpp = ax_time.text(0.98, 0.02, "Ripple Vpp(ac): 0.0000 V",
-                        transform=ax_time.transAxes,
-                        ha='right', va='bottom')
+text_vpp = ax_time.text(
+    0.98,
+    0.02,
+    "Ripple Vpp(ac): 0.0000 V\nVavg(dc): 0.0000 V",
+    transform=ax_time.transAxes,
+    ha='right',
+    va='bottom'
+)
 
 line_fft, = ax_fft.plot([], [])
-ax_fft.set_xlim(0, 360)
+ax_fft.set_xlim(0, 600)
 ax_fft.set_xlabel('Frequency (Hz)')
 ax_fft.set_ylabel('Magnitude (dBm)')
 
-text_markers = ax_fft.text(0.98, 0.02, "",
-                           transform=ax_fft.transAxes,
-                           ha='right', va='bottom')
+text_markers = ax_fft.text(
+    0.98,
+    0.02,
+    "",
+    transform=ax_fft.transAxes,
+    ha='right',
+    va='bottom'
+)
 
 plt.show(block=False)
 
@@ -62,12 +72,13 @@ while True:
     y_time[-CHUNK:] = volts
     line_time.set_ydata(y_time)
 
-    y_ac = y_time - np.mean(y_time)
+    vavg = float(np.mean(y_time))
+    y_ac = y_time - vavg
     vpp = float(y_ac.max() - y_ac.min())
-    text_vpp.set_text(f"Ripple Vpp(ac): {vpp:.4f} V")
+    text_vpp.set_text(f"Ripple Vpp(ac): {vpp:.4f} V\nVavg(dc): {vavg:.4f} V")
 
     if fs_est is not None and fs_est > 0:
-        y = y_time - np.mean(y_time)
+        y = y_time - vavg
         fft_vals = np.fft.rfft(y)
         N = BUF_LEN
         mag = np.abs(fft_vals) / N
@@ -79,7 +90,7 @@ while True:
         dBm = 10.0 * np.log10(P_watt / 1e-3)
 
         freqs = np.fft.rfftfreq(N, d=1.0 / fs_est)
-        mask = freqs <= 360.0
+        mask = freqs <= 600.0
         f_plot = freqs[mask]
         dBm_plot = dBm[mask]
 
@@ -87,17 +98,15 @@ while True:
             line_fft.set_data(f_plot, dBm_plot)
             ymin = float(np.min(dBm_plot)) - 3.0
             ymax = float(np.max(dBm_plot)) + 3.0
-            ax_fft.set_xlim(0, 360)
+            ax_fft.set_xlim(0, 600)
             ax_fft.set_ylim(ymin, ymax)
 
-            def pick_freq(target):
+            def pick(target):
                 idx = int(np.argmin(np.abs(f_plot - target)))
-                if 0 <= idx < len(dBm_plot):
-                    return f_plot[idx], dBm_plot[idx]
-                return None, None
+                return f_plot[idx], dBm_plot[idx]
 
-            f60, d60 = pick_freq(60.0)
-            f180, d180 = pick_freq(180.0)
+            f60, d60 = pick(60.0)
+            f180, d180 = pick(180.0)
 
             s60 = "N/A"
             s180 = "N/A"
@@ -106,7 +115,9 @@ while True:
             if d180 is not None:
                 s180 = f"{f180:.1f} Hz: {d180:.1f} dBm"
 
-            text_markers.set_text(f"60 Hz: {s60}\n180 Hz: {s180}")
+            text_markers.set_text(
+                    f"60 Hz: {s60}\n180 Hz: {s180}"
+                )
 
     fig.canvas.draw_idle()
     plt.pause(0.001)
