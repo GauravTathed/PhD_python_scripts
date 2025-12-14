@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.linalg import expm
 from itertools import combinations
 from matplotlib import animation
+# import imageio.v2 as imageio
 
 def pulse_hamiltonian(i, j, Omega_rad_s, phase_rad, Delta_rad_s, dim):
     H = np.zeros((dim, dim), dtype=complex)
@@ -161,10 +162,17 @@ def line_signal_model(t_us, B0, A60, phi60, A180, phi180):
         + A180 * np.cos(2 * np.pi * 180 * t_s + phi180)
     )
 
-def animate_populations_and_all_bloch_right_with_B(times_s, states, B_func, labels=None,
-                                                   stride=4, interval=10,
-                                                   sphere_points=26, ncols_right=2):
+import numpy as np
+import matplotlib.pyplot as plt
+from itertools import combinations
+import imageio.v2 as imageio
 
+def animate_populations_and_all_bloch_right_with_B(
+    times_s, states, B_func, labels=None,
+    stride=4, interval=10,
+    sphere_points=26, ncols_right=2,
+    save_gif_path=None, fps=30, dpi=120, max_frames=None
+):
     times_s = times_s[::stride]
     states = states[::stride]
 
@@ -190,7 +198,7 @@ def animate_populations_and_all_bloch_right_with_B(times_s, states, B_func, labe
 
     nrows_right = int(np.ceil(n_bloch / ncols_right))
 
-    fig = plt.figure(figsize=(18, 7.8))
+    fig = plt.figure(figsize=(18, 7.8), dpi=dpi)
     gs = fig.add_gridspec(1, 2, width_ratios=[1.45, 2.25], wspace=0.08)
 
     ax_pop = fig.add_subplot(gs[0, 0])
@@ -207,7 +215,9 @@ def animate_populations_and_all_bloch_right_with_B(times_s, states, B_func, labe
     axB = ax_pop.twinx()
     (b_line,) = axB.plot([], [], linestyle="--", lw=1.8, label="B(t)")
     axB.set_ylabel("Magnetic field (mG)")
-    axB.set_ylim(np.nanmin(B_mG) - 0.05 * np.ptp(B_mG), np.nanmax(B_mG) + 0.05 * np.ptp(B_mG))
+    span = np.ptp(B_mG)
+    pad = 0.05 * span if span > 0 else 0.1
+    axB.set_ylim(np.nanmin(B_mG) - pad, np.nanmax(B_mG) + pad)
 
     l1, lab1 = ax_pop.get_legend_handles_labels()
     l2, lab2 = axB.get_legend_handles_labels()
@@ -251,18 +261,127 @@ def animate_populations_and_all_bloch_right_with_B(times_s, states, B_func, labe
             y = Ys[(i, j)][frame]
             z = Zs[(i, j)][frame]
             bloch_pts[(i, j)]._offsets3d = ([x], [y], [z])
-
             bloch_trajs[(i, j)].set_data(Xs[(i, j)][:frame+1], Ys[(i, j)][:frame+1])
             bloch_trajs[(i, j)].set_3d_properties(Zs[(i, j)][:frame+1])
 
-        return list(pop_lines) + [b_line] + list(bloch_pts.values()) + list(bloch_trajs.values())
+    n_frames = len(times_s)
+    if max_frames is not None:
+        n_frames = min(n_frames, int(max_frames))
 
-    ani = animation.FuncAnimation(fig, update, frames=len(times_s), interval=interval, blit=False)
-    from matplotlib.animation import PillowWriter
-    ani.save("three_level_bloch.gif", writer=PillowWriter(fps=30))
-    plt.tight_layout()
+    if save_gif_path is not None:
+        frames = []
+        for k in range(n_frames):
+            update(k)
+            fig.canvas.draw()
+            rgba = np.asarray(fig.canvas.buffer_rgba())
+            frames.append(rgba[..., :3].copy())
+        imageio.mimsave(save_gif_path, frames, fps=fps)
+        print("SAVED>>>", save_gif_path)
+
     plt.show()
-    return ani
+    return fig
+
+
+# def animate_populations_and_all_bloch_right_with_B(times_s, states, B_func, labels=None,
+#                                                    stride=4, interval=10,
+#                                                    sphere_points=26, ncols_right=2):
+
+#     times_s = times_s[::stride]
+#     states = states[::stride]
+
+#     d = states.shape[1]
+#     if labels is None:
+#         labels = [f"|{k}⟩" for k in range(d)]
+
+#     pairs = list(combinations(range(d), 2))
+#     n_bloch = len(pairs)
+
+#     Xs = {}
+#     Ys = {}
+#     Zs = {}
+#     for (i, j) in pairs:
+#         x, y, z = bloch_from_states(states, i, j)
+#         Xs[(i, j)] = x
+#         Ys[(i, j)] = y
+#         Zs[(i, j)] = z
+
+#     pops_all = np.abs(states)**2
+#     t_us = times_s / 1e-6
+#     B_mG = np.array([B_func(t) for t in times_s], dtype=float) * 1e3
+
+#     nrows_right = int(np.ceil(n_bloch / ncols_right))
+
+#     fig = plt.figure(figsize=(18, 7.8))
+#     gs = fig.add_gridspec(1, 2, width_ratios=[1.45, 2.25], wspace=0.08)
+
+#     ax_pop = fig.add_subplot(gs[0, 0])
+#     pop_lines = []
+#     for i in range(d):
+#         (ln,) = ax_pop.plot([], [], lw=2, label=labels[i])
+#         pop_lines.append(ln)
+#     ax_pop.set_xlim(t_us[0], t_us[-1])
+#     ax_pop.set_ylim(0, 1.05)
+#     ax_pop.set_xlabel("Time (µs)")
+#     ax_pop.set_ylabel("Population")
+#     ax_pop.grid(True)
+
+#     axB = ax_pop.twinx()
+#     (b_line,) = axB.plot([], [], linestyle="--", lw=1.8, label="B(t)")
+#     axB.set_ylabel("Magnetic field (mG)")
+#     axB.set_ylim(np.nanmin(B_mG) - 0.05 * np.ptp(B_mG), np.nanmax(B_mG) + 0.05 * np.ptp(B_mG))
+
+#     l1, lab1 = ax_pop.get_legend_handles_labels()
+#     l2, lab2 = axB.get_legend_handles_labels()
+#     ax_pop.legend(l1 + l2, lab1 + lab2, loc="upper right")
+
+#     gs_right = gs[0, 1].subgridspec(nrows_right, ncols_right, wspace=0.05, hspace=0.20)
+
+#     u = np.linspace(0, 2 * np.pi, sphere_points)
+#     v = np.linspace(0, np.pi, max(8, sphere_points // 2))
+#     xs = np.outer(np.cos(u), np.sin(v))
+#     ys = np.outer(np.sin(u), np.sin(v))
+#     zs = np.outer(np.ones_like(u), np.cos(v))
+
+#     bloch_pts = {}
+#     bloch_trajs = {}
+
+#     for idx, (i, j) in enumerate(pairs):
+#         r = idx // ncols_right
+#         c = idx % ncols_right
+#         ax = fig.add_subplot(gs_right[r, c], projection="3d")
+#         ax.plot_wireframe(xs, ys, zs, rstride=1, cstride=1, linewidth=0.5, alpha=0.50, color="gray")
+#         ax.set_xlim(-1.05, 1.05)
+#         ax.set_ylim(-1.05, 1.05)
+#         ax.set_zlim(-1.05, 1.05)
+#         ax.set_box_aspect((1, 1, 1))
+#         ax.set_title(f"{labels[i]}↔{labels[j]}", pad=2)
+#         ax.set_axis_off()
+#         pt = ax.scatter([0], [0], [1], s=45)
+#         (tr,) = ax.plot([], [], [], lw=1.6)
+#         bloch_pts[(i, j)] = pt
+#         bloch_trajs[(i, j)] = tr
+
+#     def update(frame):
+#         for i, ln in enumerate(pop_lines):
+#             ln.set_data(t_us[:frame+1], pops_all[:frame+1, i])
+#         b_line.set_data(t_us[:frame+1], B_mG[:frame+1])
+#         ax_pop.set_title(f"t = {t_us[frame]:.3f} µs")
+
+#         for (i, j) in pairs:
+#             x = Xs[(i, j)][frame]
+#             y = Ys[(i, j)][frame]
+#             z = Zs[(i, j)][frame]
+#             bloch_pts[(i, j)]._offsets3d = ([x], [y], [z])
+
+#             bloch_trajs[(i, j)].set_data(Xs[(i, j)][:frame+1], Ys[(i, j)][:frame+1])
+#             bloch_trajs[(i, j)].set_3d_properties(Zs[(i, j)][:frame+1])
+
+#         return list(pop_lines) + [b_line] + list(bloch_pts.values()) + list(bloch_trajs.values())
+
+#     ani = animation.FuncAnimation(fig, update, frames=len(times_s), interval=interval, blit=False)
+#     plt.tight_layout()
+#     plt.show()
+#     return ani
 
 
 if __name__ == "__main__":
@@ -302,12 +421,20 @@ if __name__ == "__main__":
         dim=3
     )
 
-    animate_populations_and_all_bloch_right_with_B(
-        times, states,
-        B_func=B_func,
-        labels=["|0⟩", "|1⟩", "|2⟩"],
-        stride=6,
-        interval=8,
-        sphere_points=26,
-        ncols_right=2
-    )
+    # animate_populations_and_all_bloch_right_with_B(
+    #     times, states,
+    #     B_func=B_func,
+    #     labels=["|0⟩", "|1⟩", "|2⟩"],
+    #     stride=6,
+    #     interval=8,
+    #     sphere_points=26,
+    #     ncols_right=2
+    # )
+animate_populations_and_all_bloch_right_with_B(
+    times, states, B_func,
+    labels=["|0⟩","|1⟩","|2⟩"],
+    stride=6,
+    save_gif_path="bloch_with_B.gif",
+    fps=30,
+    max_frames=600
+)
