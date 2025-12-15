@@ -2,8 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import expm
 from itertools import combinations
-from matplotlib import animation
-# import imageio.v2 as imageio
+import imageio.v2 as imageio
 
 def pulse_hamiltonian(i, j, Omega_rad_s, phase_rad, Delta_rad_s, dim):
     H = np.zeros((dim, dim), dtype=complex)
@@ -51,14 +50,15 @@ def simulate_n_level_with_B(
     transition_sens_MHz_per_G=None,
     state_shifts_MHz_per_G=None,
     B_func=None, B_ref_G=0.0,
-    psi0=None, steps_per_segment=200, dim=None
+    psi0=None, steps_per_segment=200, dim=None, ref_state=0
 ):
     if dim is None:
-        dim = 3
+        dim = int(np.asarray(psi0).shape[0]) if psi0 is not None else 3
+
     if psi0 is None:
         psi0 = np.zeros(dim, dtype=complex)
         psi0[0] = 1.0 + 0j
-    psi = psi0.astype(complex)
+    psi = np.array(psi0, dtype=complex)
 
     if B_func is None:
         B_func = lambda t_s: B_ref_G
@@ -67,7 +67,7 @@ def simulate_n_level_with_B(
         if transition_sens_MHz_per_G is None:
             state_shifts_MHz_per_G = np.zeros(dim, dtype=float)
         else:
-            state_shifts_MHz_per_G = infer_state_shifts_from_transition_sens(dim, transition_sens_MHz_per_G, ref_state=0)
+            state_shifts_MHz_per_G = infer_state_shifts_from_transition_sens(dim, transition_sens_MHz_per_G, ref_state=ref_state)
     else:
         state_shifts_MHz_per_G = np.array(state_shifts_MHz_per_G, dtype=float)
         if state_shifts_MHz_per_G.shape != (dim,):
@@ -100,20 +100,24 @@ def simulate_n_level_with_B(
                 dB = B - B_ref_G
                 diag_MHz = wait_detunings_MHz + state_shifts_MHz_per_G * dB
                 H = np.zeros((dim, dim), dtype=complex)
-                for k in range(dim):
-                    H[k, k] = 2*np.pi * diag_MHz[k] * 1e6
+                np.fill_diagonal(H, 2*np.pi * diag_MHz * 1e6)
                 return H
 
             dtimes, dstates = evolve_time_dependent_H(psi, H_of_t, duration, steps_per_segment, t0)
-
         else:
             i, j = seg
             key_r, _ = get_key(i, j, rabi_freqs_kHz)
             key_d, _ = get_key(i, j, detunings_MHz)
 
-            Omega = 2*np.pi * rabi_freqs_kHz[key_r] * 1e3
-            Delta0_MHz = detunings_MHz[key_d]
-            duration = float(frac) * (np.pi / Omega)
+            Omega = 2*np.pi * float(rabi_freqs_kHz[key_r]) * 1e3
+            Delta0_MHz = float(detunings_MHz[key_d])
+
+            frac = float(frac)
+            # if frac < 0.0 or frac > 1.0:
+            #     raise ValueError("Pulse fraction must be in [0,1] for the arcsin mapping.")
+            # theta = 2.0 * np.arcsin(np.sqrt(frac))
+            # duration = theta / Omega
+            duration = frac * np.pi / Omega
             phase_rad = float(ph) * np.pi
 
             def H_of_t(t_s):
@@ -148,30 +152,22 @@ def bloch_from_states(states, i, j, eps=1e-12):
     an[m] = a[m] / np.sqrt(p[m])
     bn[m] = b[m] / np.sqrt(p[m])
 
-    x[m] = 2 * np.real(an[m] * np.conj(bn[m]))
-    y[m] = 2 * np.imag(an[m] * np.conj(bn[m]))
+    x[m] = 2.0 * np.real(an[m] * np.conj(bn[m]))
+    y[m] = 2.0 * np.imag(an[m] * np.conj(bn[m]))
     z[m] = (np.abs(an[m])**2 - np.abs(bn[m])**2).real
 
     return x, y, z
-
-def line_signal_model(t_us, B0, A60, phi60, A180, phi180):
-    t_s = t_us * 1e-6
-    return (
-        B0
-        + A60 * np.cos(2 * np.pi * 60 * t_s + phi60)
-        + A180 * np.cos(2 * np.pi * 180 * t_s + phi180)
-    )
-
+from matplotlib import animation
+from matplotlib.animation import PillowWriter
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import combinations
-import imageio.v2 as imageio
 
 def animate_populations_and_all_bloch_right_with_B(
     times_s, states, B_func, labels=None,
     stride=4, interval=10,
     sphere_points=26, ncols_right=2,
-    save_gif_path=None, fps=30, dpi=120, max_frames=None
+    save_gif=False, gif_path="bloch.gif", fps=30, dpi=120
 ):
     times_s = times_s[::stride]
     states = states[::stride]
@@ -264,135 +260,40 @@ def animate_populations_and_all_bloch_right_with_B(
             bloch_trajs[(i, j)].set_data(Xs[(i, j)][:frame+1], Ys[(i, j)][:frame+1])
             bloch_trajs[(i, j)].set_3d_properties(Zs[(i, j)][:frame+1])
 
-    n_frames = len(times_s)
-    if max_frames is not None:
-        n_frames = min(n_frames, int(max_frames))
+        return None
 
-    if save_gif_path is not None:
-        frames = []
-        for k in range(n_frames):
-            update(k)
-            fig.canvas.draw()
-            rgba = np.asarray(fig.canvas.buffer_rgba())
-            frames.append(rgba[..., :3].copy())
-        imageio.mimsave(save_gif_path, frames, fps=fps)
-        print("SAVED>>>", save_gif_path)
+    ani = animation.FuncAnimation(fig, update, frames=len(times_s), interval=interval, blit=False)
+
+    if save_gif:
+        writer = PillowWriter(fps=fps)
+        ani.save(gif_path, writer=writer)
 
     plt.show()
-    return fig
+    return ani
 
 
-# def animate_populations_and_all_bloch_right_with_B(times_s, states, B_func, labels=None,
-#                                                    stride=4, interval=10,
-#                                                    sphere_points=26, ncols_right=2):
-
-#     times_s = times_s[::stride]
-#     states = states[::stride]
-
-#     d = states.shape[1]
-#     if labels is None:
-#         labels = [f"|{k}⟩" for k in range(d)]
-
-#     pairs = list(combinations(range(d), 2))
-#     n_bloch = len(pairs)
-
-#     Xs = {}
-#     Ys = {}
-#     Zs = {}
-#     for (i, j) in pairs:
-#         x, y, z = bloch_from_states(states, i, j)
-#         Xs[(i, j)] = x
-#         Ys[(i, j)] = y
-#         Zs[(i, j)] = z
-
-#     pops_all = np.abs(states)**2
-#     t_us = times_s / 1e-6
-#     B_mG = np.array([B_func(t) for t in times_s], dtype=float) * 1e3
-
-#     nrows_right = int(np.ceil(n_bloch / ncols_right))
-
-#     fig = plt.figure(figsize=(18, 7.8))
-#     gs = fig.add_gridspec(1, 2, width_ratios=[1.45, 2.25], wspace=0.08)
-
-#     ax_pop = fig.add_subplot(gs[0, 0])
-#     pop_lines = []
-#     for i in range(d):
-#         (ln,) = ax_pop.plot([], [], lw=2, label=labels[i])
-#         pop_lines.append(ln)
-#     ax_pop.set_xlim(t_us[0], t_us[-1])
-#     ax_pop.set_ylim(0, 1.05)
-#     ax_pop.set_xlabel("Time (µs)")
-#     ax_pop.set_ylabel("Population")
-#     ax_pop.grid(True)
-
-#     axB = ax_pop.twinx()
-#     (b_line,) = axB.plot([], [], linestyle="--", lw=1.8, label="B(t)")
-#     axB.set_ylabel("Magnetic field (mG)")
-#     axB.set_ylim(np.nanmin(B_mG) - 0.05 * np.ptp(B_mG), np.nanmax(B_mG) + 0.05 * np.ptp(B_mG))
-
-#     l1, lab1 = ax_pop.get_legend_handles_labels()
-#     l2, lab2 = axB.get_legend_handles_labels()
-#     ax_pop.legend(l1 + l2, lab1 + lab2, loc="upper right")
-
-#     gs_right = gs[0, 1].subgridspec(nrows_right, ncols_right, wspace=0.05, hspace=0.20)
-
-#     u = np.linspace(0, 2 * np.pi, sphere_points)
-#     v = np.linspace(0, np.pi, max(8, sphere_points // 2))
-#     xs = np.outer(np.cos(u), np.sin(v))
-#     ys = np.outer(np.sin(u), np.sin(v))
-#     zs = np.outer(np.ones_like(u), np.cos(v))
-
-#     bloch_pts = {}
-#     bloch_trajs = {}
-
-#     for idx, (i, j) in enumerate(pairs):
-#         r = idx // ncols_right
-#         c = idx % ncols_right
-#         ax = fig.add_subplot(gs_right[r, c], projection="3d")
-#         ax.plot_wireframe(xs, ys, zs, rstride=1, cstride=1, linewidth=0.5, alpha=0.50, color="gray")
-#         ax.set_xlim(-1.05, 1.05)
-#         ax.set_ylim(-1.05, 1.05)
-#         ax.set_zlim(-1.05, 1.05)
-#         ax.set_box_aspect((1, 1, 1))
-#         ax.set_title(f"{labels[i]}↔{labels[j]}", pad=2)
-#         ax.set_axis_off()
-#         pt = ax.scatter([0], [0], [1], s=45)
-#         (tr,) = ax.plot([], [], [], lw=1.6)
-#         bloch_pts[(i, j)] = pt
-#         bloch_trajs[(i, j)] = tr
-
-#     def update(frame):
-#         for i, ln in enumerate(pop_lines):
-#             ln.set_data(t_us[:frame+1], pops_all[:frame+1, i])
-#         b_line.set_data(t_us[:frame+1], B_mG[:frame+1])
-#         ax_pop.set_title(f"t = {t_us[frame]:.3f} µs")
-
-#         for (i, j) in pairs:
-#             x = Xs[(i, j)][frame]
-#             y = Ys[(i, j)][frame]
-#             z = Zs[(i, j)][frame]
-#             bloch_pts[(i, j)]._offsets3d = ([x], [y], [z])
-
-#             bloch_trajs[(i, j)].set_data(Xs[(i, j)][:frame+1], Ys[(i, j)][:frame+1])
-#             bloch_trajs[(i, j)].set_3d_properties(Zs[(i, j)][:frame+1])
-
-#         return list(pop_lines) + [b_line] + list(bloch_pts.values()) + list(bloch_trajs.values())
-
-#     ani = animation.FuncAnimation(fig, update, frames=len(times_s), interval=interval, blit=False)
-#     plt.tight_layout()
-#     plt.show()
-#     return ani
-
+def line_signal_model(t_us, B0, A60, phi60, A180, phi180):
+    t_s = t_us * 1e-6
+    return (
+        B0
+        + A60 * np.cos(2 * np.pi * 60 * t_s + phi60)
+        + A180 * np.cos(2 * np.pi * 180 * t_s + phi180)
+    )
 
 if __name__ == "__main__":
+    dim = 2
     pulse_train = [(0, 1), (0, 2), "Wait", (0, 2), (0, 1)]
     fractions = [0.5, 1.0, "Wait", 1.0, 0.5]
     phases = [0.0, 1.0, "Wait", 0.0, 1.0]
 
-    rabi_freqs_kHz = {(0, 1): 10.0, (0, 2): 10.0}
+    pulse_train = [(0, 1)]
+    fractions = [30.0]
+    phases = [0.0]
+
+    rabi_freqs_kHz = {(0, 1): 2.0, (0, 2): 10.0}
     detunings_MHz = {(0, 1): 0.0, (0, 2): 0.0}
 
-    transition_sens_MHz_per_G = {(0, 1): -0.2, (0, 2): 0.3}
+    transition_sens_MHz_per_G = {(0, 1): -3.2, (0, 2): 0.3}
 
     B0_mG = 0.3076
     A60_mG = -0.2973
@@ -400,41 +301,42 @@ if __name__ == "__main__":
     A180_mG = -0.0969
     phi180 = -0.4964
 
-    B_func = lambda t_s: line_signal_model(
-        t_s / 1e-6,
-        B0_mG, A60_mG, phi60, A180_mG, phi180
-    ) * 1e-3
+    B_func = lambda t_s: line_signal_model(t_s / 1e-6, B0_mG, A60_mG, phi60, A180_mG, phi180) * 1e-3
 
     wait_time_s = 1000e-6
-    wait_detunings_MHz = [0.0, 0.0, 0.0]
+    wait_detunings_MHz = np.zeros(dim, dtype=float)
 
     times, states = simulate_n_level_with_B(
         pulse_train, fractions, phases,
         rabi_freqs_kHz, detunings_MHz,
-        wait_time_s=wait_time_s,
-        wait_detunings_MHz=wait_detunings_MHz,
+        wait_time_s=wait_time_s, wait_detunings_MHz=wait_detunings_MHz,
         transition_sens_MHz_per_G=transition_sens_MHz_per_G,
         state_shifts_MHz_per_G=None,
         B_func=B_func, B_ref_G=0.0,
-        psi0=np.array([1.0 + 0j, 0.0 + 0j, 0.0 + 0j]),
-        steps_per_segment=300,
-        dim=3
+        psi0=None, steps_per_segment=3000, dim=dim, ref_state=0
     )
 
-    # animate_populations_and_all_bloch_right_with_B(
-    #     times, states,
-    #     B_func=B_func,
-    #     labels=["|0⟩", "|1⟩", "|2⟩"],
-    #     stride=6,
+    # animate_populations_and_all_bloch_right_with_B_general(
+    #     times, states, B_func,
+    #     labels=[f"|{k}⟩" for k in range(dim)],
+    #     stride=8,
     #     interval=8,
-    #     sphere_points=26,
-    #     ncols_right=2
+    #     sphere_points=20,
+    #     ncols_right=2,
+    #     save_gif_path=None, #"nlevel_bloch.gif",
+    #     fps=30,
+    #     dpi=110,
+    #     max_frames=450
     # )
-animate_populations_and_all_bloch_right_with_B(
+
+    ani = animate_populations_and_all_bloch_right_with_B(
     times, states, B_func,
     labels=["|0⟩","|1⟩","|2⟩"],
     stride=6,
-    save_gif_path="bloch_with_B.gif",
+    interval=8,
+    save_gif=True,
+    gif_path = 'two_level_rabi_oscillations_with_line_signal.gif',
     fps=30,
-    max_frames=600
-)
+    dpi=120
+    )
+
