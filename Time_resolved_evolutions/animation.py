@@ -334,7 +334,7 @@ if __name__ == "__main__":
     labels=["|0⟩","|1⟩","|2⟩"],
     stride=6,
     interval=8,
-    save_gif=True,
+    save_gif=False,
     gif_path = 'two_level_rabi_oscillations_with_line_signal.gif',
     fps=30,
     dpi=120
