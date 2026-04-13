@@ -1,0 +1,79 @@
+Algorithm: BVA
+Saved dimension comparison results
+
+Without Line Signal, Full QFT
+  use_line_noise = False
+  use_short_U1  = False
+  d= 2: avg success =  99.80% , std across hidden values =   0.26%
+  d= 3: avg success =  99.62% , std across hidden values =   0.11%
+  d= 4: avg success =  99.23% , std across hidden values =   0.14%
+  d= 5: avg success =  98.29% , std across hidden values =   0.69%
+  d= 6: avg success =  95.58% , std across hidden values =   1.25%
+  d= 7: avg success =  91.90% , std across hidden values =   2.26%
+  d= 8: avg success =  89.28% , std across hidden values =   1.87%
+  d= 9: avg success =  80.79% , std across hidden values =   4.81%
+  d=10: avg success =  74.00% , std across hidden values =   4.70%
+  d=11: avg success =  71.13% , std across hidden values =   4.25%
+  d=12: avg success =  59.35% , std across hidden values =   5.09%
+  d=13: avg success =  56.79% , std across hidden values =   3.27%
+  d=14: avg success =  48.58% , std across hidden values =   5.94%
+  d=15: avg success =  42.55% , std across hidden values =   4.76%
+  d=16: avg success =  37.65% , std across hidden values =   3.03%
+
+With Line Signal, Full QFT
+  use_line_noise = True
+  use_short_U1  = False
+  d= 2: avg success =  99.81% , std across hidden values =   0.25%
+  d= 3: avg success =  99.63% , std across hidden values =   0.13%
+  d= 4: avg success =  99.19% , std across hidden values =   0.16%
+  d= 5: avg success =  98.30% , std across hidden values =   0.71%
+  d= 6: avg success =  95.43% , std across hidden values =   1.80%
+  d= 7: avg success =  92.89% , std across hidden values =   2.38%
+  d= 8: avg success =  87.14% , std across hidden values =   1.55%
+  d= 9: avg success =  67.70% , std across hidden values =  10.75%
+  d=10: avg success =  22.88% , std across hidden values =  13.46%
+  d=11: avg success =  12.01% , std across hidden values =   9.00%
+  d=12: avg success =   8.12% , std across hidden values =   5.62%
+  d=13: avg success =   7.49% , std across hidden values =   3.29%
+  d=14: avg success =   7.57% , std across hidden values =   5.03%
+  d=15: avg success =   7.20% , std across hidden values =   4.06%
+  d=16: avg success =   6.77% , std across hidden values =   2.66%
+
+Without Line Signal, Short U1
+  use_line_noise = False
+  use_short_U1  = True
+  d= 2: avg success =  99.84% , std across hidden values =   0.21%
+  d= 3: avg success =  99.62% , std across hidden values =   0.12%
+  d= 4: avg success =  99.24% , std across hidden values =   0.31%
+  d= 5: avg success =  98.47% , std across hidden values =   0.40%
+  d= 6: avg success =  97.35% , std across hidden values =   0.85%
+  d= 7: avg success =  94.97% , std across hidden values =   1.69%
+  d= 8: avg success =  92.41% , std across hidden values =   2.65%
+  d= 9: avg success =  89.45% , std across hidden values =   4.82%
+  d=10: avg success =  85.36% , std across hidden values =   6.57%
+  d=11: avg success =  80.61% , std across hidden values =   7.38%
+  d=12: avg success =  76.51% , std across hidden values =   8.61%
+  d=13: avg success =  73.29% , std across hidden values =   9.08%
+  d=14: avg success =  68.25% , std across hidden values =  11.43%
+  d=15: avg success =  64.17% , std across hidden values =  12.44%
+  d=16: avg success =  58.84% , std across hidden values =  11.92%
+
+With Line Signal, Short U1
+  use_line_noise = True
+  use_short_U1  = True
+  d= 2: avg success =  99.80% , std across hidden values =   0.27%
+  d= 3: avg success =  99.62% , std across hidden values =   0.10%
+  d= 4: avg success =  99.25% , std across hidden values =   0.30%
+  d= 5: avg success =  98.57% , std across hidden values =   0.29%
+  d= 6: avg success =  96.90% , std across hidden values =   1.42%
+  d= 7: avg success =  95.13% , std across hidden values =   1.85%
+  d= 8: avg success =  92.63% , std across hidden values =   2.51%
+  d= 9: avg success =  89.32% , std across hidden values =   4.77%
+  d=10: avg success =  82.48% , std across hidden values =   5.86%
+  d=11: avg success =  69.88% , std across hidden values =   9.19%
+  d=12: avg success =  45.12% , std across hidden values =  20.15%
+  d=13: avg success =  29.83% , std across hidden values =  12.10%
+  d=14: avg success =  16.69% , std across hidden values =   8.68%
+  d=15: avg success =  13.99% , std across hidden values =   8.37%
+  d=16: avg success =  12.32% , std across hidden values =   7.62%
+

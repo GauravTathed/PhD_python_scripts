@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg import norm
 
 from U_decomp import unitary_to_G_rotations
+from unitary_generator import unitary_from_pulse_sequence
 
 
 def wrap_pi(x):
@@ -161,6 +162,23 @@ def qudit_qft(d, inverse=False):
     return omega ** (j * k) / np.sqrt(d)
 
 
+def build_short_U1_sequence(dimension):
+    """Build the shorter state-preparation unitary that maps |0> to the uniform superposition."""
+    dimension = int(dimension)
+    if dimension < 2:
+        raise ValueError("dimension must be at least 2")
+
+    couplings = []
+    thetas = []
+    phases = []
+    for level in range(1, dimension):
+        couplings.append((0, level))
+        thetas.append(2.0 * np.arcsin(np.sqrt(1.0 / (level + 1))))
+        phases.append(np.pi / 2.0)
+
+    return unitary_from_pulse_sequence(couplings, thetas, phases, dim=dimension).conj().T
+
+
 def single_qudit_phase_oracle(hidden_value, d):
     hidden_value = int(hidden_value)
     if d < 2:
@@ -186,7 +204,7 @@ def grover_diffuser(d):
     return 2.0 * np.outer(uniform_state, np.conjugate(uniform_state)) - np.eye(d, dtype=complex)
 
 
-def build_algorithm_unitaries(algorithm_name, dimension, **algorithm_kwargs):
+def build_algorithm_unitaries(algorithm_name, dimension, use_short_U1=False, **algorithm_kwargs):
     algorithm_key = str(algorithm_name).strip().lower()
     dimension = int(dimension)
     if dimension < 2:
@@ -196,8 +214,9 @@ def build_algorithm_unitaries(algorithm_name, dimension, **algorithm_kwargs):
         if "hidden_value" not in algorithm_kwargs:
             raise ValueError("BVA requires hidden_value")
         hidden_value = algorithm_kwargs["hidden_value"]
+        U1 = build_short_U1_sequence(dimension) if use_short_U1 else qudit_qft(dimension)
         return [
-            qudit_qft(dimension),
+            U1,
             single_qudit_phase_oracle(hidden_value, dimension),
             qudit_qft(dimension, inverse=True),
         ]
@@ -212,12 +231,13 @@ def build_algorithm_unitaries(algorithm_name, dimension, **algorithm_kwargs):
 
         oracle = grover_oracle(marked_state, dimension)
         diffuser = grover_diffuser(dimension)
-        return [qudit_qft(dimension)] + [gate for _ in range(grover_iterations) for gate in (oracle, diffuser)]
+        U1 = build_short_U1_sequence(dimension) if use_short_U1 else qudit_qft(dimension)
+        return [U1] + [gate for _ in range(grover_iterations) for gate in (oracle, diffuser)]
 
     raise ValueError(f"Unsupported algorithm_name: {algorithm_name}")
 
 
-def compile_algorithm_pulses(mappings, dimension, algorithm_name, center=0, tol=1e-10, minimize_gamma=False, initial_frame=None, return_metadata=False, **algorithm_kwargs):
+def compile_algorithm_pulses(mappings, dimension, algorithm_name, center=0, tol=1e-10, minimize_gamma=False, initial_frame=None, return_metadata=False, use_short_U1=False, **algorithm_kwargs):
     """
     Compile a named algorithm into star-topology pulse lists.
 
@@ -233,12 +253,15 @@ def compile_algorithm_pulses(mappings, dimension, algorithm_name, center=0, tol=
     return_metadata : bool, optional
         When True, also return a metadata dict with logical couplings, compiled schedule,
         final frame, and the source unitary list.
+    use_short_U1 : bool, optional
+        When True, replace the initial QFT state-preparation unitary with the shorter
+        state-preparation unitary that maps |0> to the equal superposition.
 
     Additional keyword arguments
     ----------------------------
     BVA:
         hidden_value : int
-    Grover:s.py
+    Grover:
         marked_state : int
         grover_iterations : int, optional
 
@@ -249,7 +272,7 @@ def compile_algorithm_pulses(mappings, dimension, algorithm_name, center=0, tol=
     pulse_train_list, pulse_angle_list, pulse_phases_list, metadata
         When return_metadata=True.
     """
-    unitaries = build_algorithm_unitaries(algorithm_name, dimension, **algorithm_kwargs)
+    unitaries = build_algorithm_unitaries(algorithm_name, dimension, use_short_U1=use_short_U1, **algorithm_kwargs)
     flat_schedule, final_frame, block_summaries = decompose_unitary_sequence(
         unitaries,
         center=center,
@@ -284,6 +307,7 @@ __all__ = [
     "compile_algorithm_pulses",
     "build_algorithm_unitaries",
     "qudit_qft",
+    "build_short_U1_sequence",
     "single_qudit_phase_oracle",
     "grover_oracle",
     "grover_diffuser",
