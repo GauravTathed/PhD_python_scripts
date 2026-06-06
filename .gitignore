@@ -1,1 +1,5 @@
 two_level_rabi_oscillations_with_line_signal.gif
+__pycache__/
+*.pyc
+arxiv_papers.json
+arxiv_papers.csv
