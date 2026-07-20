@@ -165,7 +165,8 @@ if __name__ == "__main__":
 
     # Load your bitstream & clocks (ZCU111 example)
     print("overlaying the bitstream")
-    ol = Overlay("DDS_630BB.xsa", download=True)
+    ol = Overlay("Mute_control_DDS_630BB.xsa", download=True)
+    # ol = Overlay("DDS_630BB.xsa", download=True)
     print("Bitstream uploaded")
     print("setting the clock frequencies")
     xrfclk.set_ref_clks(lmk_freq=122.88, lmx_freq=409.6)
