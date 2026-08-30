@@ -1,0 +1,294 @@
+{
+  "generated_utc": "2026-08-28T18:30:02.172154+00:00",
+  "source_bva_notebook": "C:\\Users\\iamga\\OneDrive\\Documents\\GitHub\\PhD_python_scripts\\BVA_analysis_scripts\\BVA_qudit_analysis_script.ipynb",
+  "input_paths": {
+    "transition_strengths": "\\\\senkolab-nas.iqc.uwaterloo.ca\\Documents\\Lab Data\\Phase_and_freq_correction_180Hz\\Transition_strengths_4p209.txt",
+    "sensitivities": "\\\\senkolab-nas.iqc.uwaterloo.ca\\Documents\\Lab Data\\Phase_and_freq_correction_180Hz\\sensitivities_4p2079.txt",
+    "line_signal": "\\\\senkolab-nas.iqc.uwaterloo.ca\\Documents\\Lab Data\\Line_signal_fitted_params\\line_signal_fit_params_20260220.txt"
+  },
+  "selected_transitions": [
+    {
+      "state_index": 8,
+      "state_label": "[2, 0]",
+      "coupling": [
+        0,
+        8
+      ],
+      "transition": [
+        0,
+        2,
+        0
+      ],
+      "sensitivity_mhz_per_g": 4.0589839045424014e-05,
+      "pi_time_us": 79.04
+    },
+    {
+      "state_index": 6,
+      "state_label": "[4, 0]",
+      "coupling": [
+        0,
+        6
+      ],
+      "transition": [
+        0,
+        4,
+        0
+      ],
+      "sensitivity_mhz_per_g": -1.3868685343823017,
+      "pi_time_us": 46.555037998008025
+    },
+    {
+      "state_index": 2,
+      "state_label": "[3, 1]",
+      "coupling": [
+        0,
+        2
+      ],
+      "transition": [
+        0,
+        3,
+        1
+      ],
+      "sensitivity_mhz_per_g": 2.1385194393133133,
+      "pi_time_us": 25.951404326024335
+    },
+    {
+      "state_index": 7,
+      "state_label": "[2, -2]",
+      "coupling": [
+        0,
+        7
+      ],
+      "transition": [
+        0,
+        2,
+        -2
+      ],
+      "sensitivity_mhz_per_g": -2.876889912840852,
+      "pi_time_us": 56.401920689074295
+    },
+    {
+      "state_index": 1,
+      "state_label": "[4, -2]",
+      "coupling": [
+        0,
+        1
+      ],
+      "transition": [
+        0,
+        4,
+        -2
+      ],
+      "sensitivity_mhz_per_g": -3.42018057358473,
+      "pi_time_us": 19.12
+    }
+  ],
+  "phase_count": 16,
+  "phases_rad": [
+    0.0,
+    0.39269908169872414,
+    0.7853981633974483,
+    1.1780972450961724,
+    1.5707963267948966,
+    1.9634954084936207,
+    2.356194490192345,
+    2.748893571891069,
+    3.141592653589793,
+    3.5342917352885173,
+    3.9269908169872414,
+    4.319689898685965,
+    4.71238898038469,
+    5.105088062083414,
+    5.497787143782138,
+    5.890486225480862
+  ],
+  "wait_times_us": [
+    0.0,
+    125.0,
+    250.0,
+    375.0,
+    500.0,
+    625.0,
+    750.0,
+    875.0,
+    1000.0,
+    1125.0,
+    1250.0,
+    1375.0,
+    1500.0,
+    1625.0,
+    1750.0,
+    1875.0,
+    2000.0
+  ],
+  "shots_per_phase": 200,
+  "rng_seed": 137,
+  "use_deterministic_line_signal": true,
+  "fit_model": "P(phi) = offset + amplitude*sin(phi + phase_rad)",
+  "contrast_definition": "amplitude / offset",
+  "decay_fit_model": "C(t) = initial_contrast * exp(-(t/T2_G)^2 - t/T2_L)",
+  "t2_star_definition": "positive time where C(t)/C(0) = 1/e",
+  "t2_star_results": [
+    {
+      "state_index": 8,
+      "state_label": "[2, 0]",
+      "sensitivity_mhz_per_g": 4.0589839045424014e-05,
+      "initial_contrast": 0.9973057080396102,
+      "initial_contrast_error": 0.0004651390003934163,
+      "t2_gaussian_us": 1733.4768789923626,
+      "t2_gaussian_error_us": 36.81144131863794,
+      "t2_lorentzian_us": 4352.091003508039,
+      "t2_lorentzian_error_us": 276.0176954834888,
+      "t2_star_us": 1422.2899330147402,
+      "t2_star_error_us": 12.913295172595026,
+      "chi_squared": 91.05651225687367,
+      "reduced_chi_squared": 6.504036589776691
+    },
+    {
+      "state_index": 6,
+      "state_label": "[4, 0]",
+      "sensitivity_mhz_per_g": -1.3868685343823017,
+      "initial_contrast": 0.9991861487034758,
+      "initial_contrast_error": 0.000144104379251124,
+      "t2_gaussian_us": 1499.1695698708822,
+      "t2_gaussian_error_us": 25.602321330238155,
+      "t2_lorentzian_us": 5481.2748021014,
+      "t2_lorentzian_error_us": 408.7426403851038,
+      "t2_star_us": 1308.1060227334656,
+      "t2_star_error_us": 11.189699989639111,
+      "chi_squared": 69.30015630735662,
+      "reduced_chi_squared": 4.950011164811187
+    },
+    {
+      "state_index": 2,
+      "state_label": "[3, 1]",
+      "sensitivity_mhz_per_g": 2.1385194393133133,
+      "initial_contrast": 0.9997383603342841,
+      "initial_contrast_error": 3.497893891553242e-05,
+      "t2_gaussian_us": 1355.8306910377796,
+      "t2_gaussian_error_us": 21.679168465716135,
+      "t2_lorentzian_us": 6338.085333404219,
+      "t2_lorentzian_error_us": 573.0212067247048,
+      "t2_star_us": 1218.5458322525037,
+      "t2_star_error_us": 10.326276065136636,
+      "chi_squared": 86.72745877037694,
+      "reduced_chi_squared": 6.194818483598353
+    },
+    {
+      "state_index": 7,
+      "state_label": "[2, -2]",
+      "sensitivity_mhz_per_g": -2.876889912840852,
+      "initial_contrast": 0.9982892910876475,
+      "initial_contrast_error": 0.00030933578754445445,
+      "t2_gaussian_us": 1238.4225846340285,
+      "t2_gaussian_error_us": 23.715920476033958,
+      "t2_lorentzian_us": 4128.3061985939175,
+      "t2_lorentzian_error_us": 333.89317015750146,
+      "t2_star_us": 1066.5228008784304,
+      "t2_star_error_us": 9.533657811712539,
+      "chi_squared": 41.33959454607883,
+      "reduced_chi_squared": 2.9528281818627735
+    },
+    {
+      "state_index": 1,
+      "state_label": "[4, -2]",
+      "sensitivity_mhz_per_g": -3.42018057358473,
+      "initial_contrast": 0.9997229943917051,
+      "initial_contrast_error": 3.498899806773262e-05,
+      "t2_gaussian_us": 1065.806803891653,
+      "t2_gaussian_error_us": 17.510112417179254,
+      "t2_lorentzian_us": 6296.49623952149,
+      "t2_lorentzian_error_us": 753.484558015825,
+      "t2_star_us": 979.4127514267105,
+      "t2_star_error_us": 8.776574010634308,
+      "chi_squared": 48.393404566502156,
+      "reduced_chi_squared": 3.456671754750154
+    }
+  ],
+  "noise_model": {
+    "use_line_noise": true,
+    "line_reference": "start",
+    "calibration_scale": 1.0,
+    "magnetic_scale": 1.0,
+    "laser_scale": 1.0,
+    "calibration_noise_hwhm_hz": 15,
+    "calibration_noise_sigma_hz": 0.0,
+    "magnetic_field_std_g": 4.3e-05,
+    "laser_gaussian_T_s": 0.013866157991868328,
+    "laser_lorentzian_L_s": 0.021068496868279607,
+    "voigt_x_min_hz": -1000.0,
+    "voigt_x_max_hz": 1000.0,
+    "voigt_num_points": 100000,
+    "rabi_frequency_std_fraction": 0.0438,
+    "line_signal_noise_std_g": 0.0
+  },
+  "reference_pi_times_us": [
+    23.9,
+    25.491,
+    98.8,
+    25.836,
+    32.11
+  ],
+  "reference_strength_indices": [
+    [
+      21,
+      2
+    ],
+    [
+      14,
+      0
+    ],
+    [
+      5,
+      2
+    ],
+    [
+      16,
+      4
+    ],
+    [
+      15,
+      4
+    ]
+  ],
+  "pi_time_scale": 0.8,
+  "resolved_line_model": {
+    "B0_mG": 0.3271517519300357,
+    "frequencies_hz": [
+      60.0,
+      120.0,
+      180.0,
+      240.0,
+      300.0,
+      360.0,
+      420.0,
+      480.0,
+      540.0,
+      600.0
+    ],
+    "amplitudes_mG": [
+      0.3112433260793414,
+      0.014958444933455472,
+      0.08322951019997205,
+      0.0074000837701411306,
+      0.03344298042062464,
+      0.007084637169089701,
+      0.010582250652286575,
+      0.009042293109842683,
+      0.013802697344307141,
+      0.013916424182048333
+    ],
+    "phases_rad": [
+      -2.3549459978937315,
+      2.3418600690427227,
+      2.5131113837571672,
+      2.8708163657967805,
+      -2.219076518036332,
+      -0.6231971238297751,
+      1.7438897507676578,
+      1.1332344827825458,
+      0.933211371114616,
+      -0.6228542256495255
+    ]
+  }
+}
